@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ContentFilters</key>
+	<dict/>
+	<key>auto_connect</key>
+	<true/>
+	<key>data</key>
+	<dict>
+		<key>connection</key>
+		<dict>
+			<key>database</key>
+			<string>Mimic3</string>
+			<key>host</key>
+			<string>127.0.0.1</string>
+			<key>kcid</key>
+			<string>-992406388221041280</string>
+			<key>name</key>
+			<string>Shruti</string>
+			<key>rdbms_type</key>
+			<string>mysql</string>
+			<key>sslCACertFileLocation</key>
+			<string></string>
+			<key>sslCACertFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslCertificateFileLocation</key>
+			<string></string>
+			<key>sslCertificateFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslKeyFileLocation</key>
+			<string></string>
+			<key>sslKeyFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>type</key>
+			<string>SPTCPIPConnection</string>
+			<key>useSSL</key>
+			<integer>0</integer>
+			<key>user</key>
+			<string>root</string>
+		</dict>
+		<key>session</key>
+		<dict>
+			<key>connectionEncoding</key>
+			<string>latin1</string>
+			<key>contentFilter</key>
+			<dict/>
+			<key>contentPageNumber</key>
+			<integer>1</integer>
+			<key>contentSelection</key>
+			<data>
+			YnBsaXN0MDDUAQIDBAUGJCVYJHZlcnNpb25YJG9iamVjdHNZJGFy
+			Y2hpdmVyVCR0b3ASAAGGoKgHCBMUFRYaIVUkbnVsbNMJCgsMDxJX
+			TlMua2V5c1pOUy5vYmplY3RzViRjbGFzc6INDoACgAOiEBGABIAF
+			gAdUdHlwZVRyb3dzXxAdU2VsZWN0aW9uRGV0YWlsVHlwZU5TSW5k
+			ZXhTZXTSFwsYGVxOU1JhbmdlQ291bnQQAIAG0hscHR5aJGNsYXNz
+			bmFtZVgkY2xhc3Nlc1pOU0luZGV4U2V0oh8gWk5TSW5kZXhTZXRY
+			TlNPYmplY3TSGxwiI1xOU0RpY3Rpb25hcnmiIiBfEA9OU0tleWVk
+			QXJjaGl2ZXLRJidUZGF0YYABAAgAEQAaACMALQAyADcAQABGAE0A
+			VQBgAGcAagBsAG4AcQBzAHUAdwB8AIEAoQCmALMAtQC3ALwAxwDQ
+			ANsA3gDpAPIA9wEEAQcBGQEcASEAAAAAAAACAQAAAAAAAAAoAAAA
+			AAAAAAAAAAAAAAABIw==
+			</data>
+			<key>contentSortColIsAsc</key>
+			<true/>
+			<key>contentViewport</key>
+			<string>{{0, 0}, {1077, 572}}</string>
+			<key>isToolbarVisible</key>
+			<true/>
+			<key>queries</key>
+			<string>######## exploratory #############
+
+SELECT * FROM PATIENTS limit 5; 
+# EXPIRE_FLAG indicates whether the patient died within the hospital
+
+SELECT COUNT(DISTINCT(SUBJECT_ID)) FROM PATIENTS;
+
+# male female count
+SELECT GENDER, count(*) FROM PATIENTS
+ 	GROUP BY GENDER;
+ 	
+SELECT EXPIRE_FLAG, count(*) FROM PATIENTS
+ 	GROUP BY EXPIRE_FLAG;
+	
+# count people who died in hospital: 51%
+SELECT EXPIRE_FLAG, count(*) FROM PATIENTS
+	GROUP BY GENDER, EXPIRE_FLAG; 
+
+SELECT COUNT(DISTINCT(HADM_ID)) FROM ADMISSIONS;
+SELECT COUNT(DISTINCT(SUBJECT_ID)) FROM ADMISSIONS;
+
+SELECT COUNT(DISTINCT(ICD9_CODE)) FROM D_ICD_DIAGNOSES;
+
+SELECT COUNT(DISTINCT(ICD9_CODE)) FROM DIAGNOSES_ICD;
+	
+SELECT COUNT(DISTINCT(HADM_ID)) FROM DIAGNOSES_ICD
+	WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE '%SEPTIC SHOCK%');
+
+SELECT COUNT(DISTINCT(SUBJECT_ID)) FROM DIAGNOSES_ICD 
+	WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE '%diabetes mellitus%');
+
+SELECT * FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE '%acute kidney%';
+SELECT * FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'chronic kidney disease%'; # starts with 'chronic kidney disease'
+
+SELECT COUNT(DISTINCT(SUBJECT_ID)) FROM DIAGNOSES_ICD 
+	WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE '%acute kidney%');
+	
+SELECT COUNT(DISTINCT(SUBJECT_ID)) FROM DIAGNOSES_ICD 
+	WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'chronic kidney disease%');
+
+##### IMPORTANT columns from each table
+SELECT SUBJECT_ID, GENDER FROM PATIENTS;
+SELECT SUBJECT_ID, HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, HOSPITAL_EXPIRE_FLAG FROM ADMISSIONS;
+SELECT SUBJECT_ID, HADM_ID, CURR_CAREUNIT FROM CALLOUT;
+SELECT ITEMID, VALUENUM, WARNING FROM CHARTEVENTS LIMIT 5;
+SELECT ITEMID, LABEL FROM D_ITEMS;
+SELECT ITEMID, LABEL FROM D_LABITEMS;
+SELECT ICD9_CODE, LONG_TITLE FROM D_ICD_DIAGNOSES;
+SELECT SUBJECT_ID, HADM_ID, ICD9_CODE, SEQ_NUM FROM DIAGNOSES_ICD;
+# select columns from icustays table, sort it first hospital admission id, then by descending order of length of stay. Then select only first record from each unique hadm_id 
+SELECT * 
+	FROM (SELECT HADM_ID, SUBJECT_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+			ORDER BY HADM_ID, LOS DESC) AS TAB1
+	GROUP BY HADM_ID;
+	
+	
+# patients with chronic kidney disease
+SELECT *
+	FROM (SELECT * FROM DIAGNOSES_ICD 
+					WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'chronic kidney disease%')) AS patient_diag
+	INNER JOIN
+		(SELECT ICD9_CODE, LONG_TITLE FROM D_ICD_DIAGNOSES 
+			WHERE LONG_TITLE LIKE 'chronic kidney disease%') AS diag_icd9
+		ON patient_diag.ICD9_CODE=diag_icd9.ICD9_CODE
+	ORDER BY HADM_ID DESC;
+
+# subject id and their hospital id, hospital expiration status of patients with chronic kidney disease
+SELECT SUBJECT_ID, HADM_ID, HOSPITAL_EXPIRE_FLAG FROM ADMISSIONS 
+	WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+								WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'chronic kidney disease%')
+								);
+								
+# group chronic kidney disease patients by hospital expiration status
+SELECT HOSPITAL_EXPIRE_FLAG, COUNT(*) FROM ADMISSIONS 
+	WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+								WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'chronic kidney disease%')
+								)
+	GROUP BY HOSPITAL_EXPIRE_FLAG;								
+
+# subject id and their hospital id, hospital expiration status of patients with acute kidney failure
+SELECT SUBJECT_ID, HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, HOSPITAL_EXPIRE_FLAG FROM ADMISSIONS 
+	WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+									WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+								);
+								
+# group acute kidney failure patients by hospital expiration status
+SELECT HOSPITAL_EXPIRE_FLAG, COUNT(*) FROM ADMISSIONS 
+	WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+								WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+								)
+	GROUP BY HOSPITAL_EXPIRE_FLAG;	
+	
+######## final
+SELECT *
+	FROM (SELECT kidney_patients.SUBJECT_ID, HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, ADMITTIME, DISCHTIME, GENDER, HOSPITAL_EXPIRE_FLAG 
+			FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 		) AS kidney_patients
+		INNER JOIN
+			(SELECT SUBJECT_ID, GENDER FROM PATIENTS) AS all_patients
+		ON all_patients.SUBJECT_ID = kidney_patients.SUBJECT_ID) AS tab1
+	
+	INNER JOIN
+	
+		(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu_unit
+					GROUP BY HADM_ID
+				 ) AS icu_unit
+		
+	ON tab1.HADM_ID = icu_unit.HADM_ID;	
+	
+# rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT, icu.LOS, icu.los_icu,
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS,
+					ROUND( (CAST(outtime AS DATE) - CAST(intime AS DATE)) , 4) AS los_icu
+					FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID;	
+ 
+# include icu_stay id
+
+
+SELECT SUBJECT_ID, HADM_ID, ICUSTAY_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu_unit
+					GROUP BY HADM_ID;
+					
+# number of columns in a table
+SELECT count(*)
+FROM information_schema.columns
+WHERE table_name = 'elixhauser';
+	
+SELECT COUNT(LABEL) FROM D_ITEMS;
+
+SELECT COUNT(DISTINCT(ITEMID)) FROM D_ITEMS;
+
+SELECT COUNT(DISTINCT(ITEMID)) FROM D_LABITEMS;
+
+SELECT ITEMID, LABEL FROM D_ITEMS WHERE LABEL LIKE '%HEART RATE%';
+
+SELECT * FROM CHARTEVENTS
+	WHERE CHARTEVENTS.ITEMID IN (SELECT ITEMID FROM D_ITEMS WHERE LABEL = 'HEART RATE');
+	
+SELECT SUBJECT_ID, MAX(VALUE), MIN(VALUE), AVG(VALUE) FROM CHARTEVENTS
+	WHERE CHARTEVENTS.ITEMID IN (SELECT ITEMID FROM D_ITEMS WHERE LABEL = 'HEART RATE')
+	GROUP BY SUBJECT_ID;</string>
+			<key>table</key>
+			<string>elixhauser</string>
+			<key>view</key>
+			<string>SP_VIEW_CUSTOMQUERY</string>
+			<key>windowVerticalDividerPosition</key>
+			<real>202</real>
+		</dict>
+	</dict>
+	<key>encrypted</key>
+	<false/>
+	<key>format</key>
+	<string>connection</string>
+	<key>queryFavorites</key>
+	<array/>
+	<key>queryHistory</key>
+	<array>
+		<string>SELECT count(*)
+FROM information_schema.columns
+WHERE table_name = 'elixhauser'</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT, icu.LOS, icu.los_icu,
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS,
+					ROUND( (CAST(outtime AS DATE) - CAST(intime AS DATE)) , 4) AS los_icu
+					FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+		<string>SELECT COUNT(DISTINCT(HADM_ID)) FROM ADMISSIONS</string>
+		<string>SELECT COUNT(HADM_ID) FROM ADMISSIONS</string>
+		<string>SELECT COUNT(DISTINCT(SUBJECT_ID)) FROM ADMISSIONS</string>
+		<string>SELECT SUBJECT_ID, HADM_ID, ICUSTAY_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS</string>
+		<string># include icu_stay id
+
+
+SELECT SUBJECT_ID, HADM_ID, ICUSTAY_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu_unit
+					GROUP BY HADM_ID</string>
+		<string>SELECT SUBJECT_ID, HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS</string>
+		<string>SELECT SUBJECT_ID, HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC</string>
+		<string># include icu_stay id
+
+
+SELECT HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu_unit
+					GROUP BY HADM_ID</string>
+		<string># include icu_stay id
+
+SELECT adm.SUBJECT_ID, adm.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER,
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+adm.HOSPITAL_EXPIRE_FLAG 
+
+FROM ADMISSIONS adm
+
+INNER JOIN PATIENTS pat
+ ON adm.SUBJECT_ID = pat.SUBJECT_ID</string>
+		<string>SELECT HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT, icu.LOS, icu.los_icu,
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS
+					ROUND( (CAST(outtime AS DATE) - CAST(intime AS DATE)) , 4) AS los_icu
+					FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, 
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT, icu.LOS, 
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS
+					#ROUND( (CAST(outtime AS DATE) - CAST(intime AS DATE)) , 4) AS los_icu
+					FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT, icu.LOS, 
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS,
+					#ROUND( (CAST(outtime AS DATE) - CAST(intime AS DATE)) , 4) AS los_icu
+					FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT, icu.LOS, los_icu,
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS,
+					ROUND( (CAST(outtime AS DATE) - CAST(intime AS DATE)) , 4) AS los_icu
+					FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT, icu.LOS,
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT,
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+		<string># rough	
+
+SELECT acutekidney.SUBJECT_ID, acutekidney.HADM_ID, ETHNICITY, INSURANCE, MARITAL_STATUS, pat.GENDER, icu.LAST_CAREUNIT
+-- calculate length of stay and age of patient
+ROUND( (CAST(DISCHTIME AS DATE) - CAST(ADMITTIME AS DATE)) , 4) AS los_hospital,
+ROUND( TIMESTAMPDIFF(MONTH,pat.DOB,ADMITTIME)/12, 4) AS age,
+acutekidney.HOSPITAL_EXPIRE_FLAG 
+
+-- select data from admissions table for patients who have acute kidney failure and have a record in chartevents
+FROM (SELECT * FROM ADMISSIONS 
+					WHERE ADMISSIONS.HADM_ID IN (SELECT HADM_ID FROM DIAGNOSES_ICD 
+													WHERE DIAGNOSES_ICD.ICD9_CODE IN (SELECT ICD9_CODE FROM D_ICD_DIAGNOSES WHERE LONG_TITLE LIKE 'acute kidney failure%')
+	 	 										)
+	 	 			AND HAS_CHARTEVENTS_DATA =1
+	 ) AS acutekidney
+	 
+INNER JOIN PATIENTS pat
+	ON acutekidney.SUBJECT_ID = pat.SUBJECT_ID
+INNER JOIN 
+	(SELECT * 
+			FROM (SELECT HADM_ID, LAST_CAREUNIT, LOS FROM ICUSTAYS
+					ORDER BY HADM_ID, LOS DESC) AS icu
+					GROUP BY HADM_ID
+				 ) AS icu
+	ON acutekidney.HADM_ID=icu.HADM_ID</string>
+	</array>
+	<key>rdbms_type</key>
+	<string>mysql</string>
+	<key>rdbms_version</key>
+	<string>5.6.25</string>
+	<key>version</key>
+	<integer>1</integer>
+</dict>
+</plist>
